@@ -1,0 +1,16 @@
+{
+	"name": "AppReloadSave",
+	"description": "Extension for reloadin and saving Qlik Sense Apps",
+	"icon": "extension",
+	"preview": "assets/icon.png",
+	"type": "visualization",
+	"version": "2.0.0",
+	"author": "Jan Skibniewski",
+	"homepage": "https://github.com/miguki",
+	"keywords": "qlik-sense, visualization, reload",
+	"license": "MIT",
+	"repository": "",
+	"dependencies": {
+		"qlik-sense": ">=3.0.x"
+	}
+}

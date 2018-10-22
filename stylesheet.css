@@ -1,0 +1,13 @@
+.qv-object-AppReloadSave div.qv-object-content-container {
+	overflow: auto;
+}
+
+.qv-object-AppReloadSave button {
+	width: 100%;
+	min-width: 140px;
+	white-space: nowrap;
+}
+
+.qv-object-AppReloadSave .qv-object-nav >.icon-zoom-in{
+	display: none;
+  }
