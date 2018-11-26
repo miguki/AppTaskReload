@@ -1,134 +1,198 @@
-define(["qlik", "jquery", "text!./template.html", "css!./vendors/font-awesome-4.7.0/css/font-awesome.min.css", "css!./stylesheet.css"],
-	function (qlik, $, template) {
+define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html", "css!./vendors/font-awesome-4.7.0/css/font-awesome.min.css", "css!./stylesheet.css"],
+	function (qlik, $, utils, propertiesPanel, template) {
 
 		return {
 			initialProperties: {
-
-			},
-			template: template,
-			definition: {
-				type: "items",
-				component: "accordion",
-				items: {
-					settings: {
-						uses: "settings"
-					}
+				props: {
+					reloadType: "currApp",
+					waitAppReload: true
 				}
 			},
+			template: template,
+			definition: propertiesPanel,
 			snapshot: {
 				canTakeSnapshot: false
 			},
 			controller: ['$scope', function ($scope) {
 
-				if(typeof(extensionObjectId) === 'undefined') {
-					var extensionObjectId = $scope.layout.qInfo.qId;
-					var reloadSaveButtonId = '#reload-save-button-' + extensionObjectId;
-					var reloadSaveButtonLabelId = '#reload-save-button-label-' + extensionObjectId;
-					var spinnerId = '#spinner-' + extensionObjectId;
-					$('#reload-save-button').attr('id', reloadSaveButtonId.replace('#', ''));
-					$('#reload-save-button-label').attr('id', reloadSaveButtonLabelId.replace('#', ''));
-					$('#spinner').attr('id', spinnerId.replace('#', ''));
-				}
-				
-				if(typeof(app) === 'undefined') {
-					var app = qlik.openApp(qlik.currApp().id);
+				console.log('layout', $scope.layout)
+
+				var app;
+				var appLayout;
+				var currentUser;
+				var serverUrl;
+				var extensionObjectId;
+				var reloadSaveButtonId;
+				var reloadSaveButtonLabelId;
+				var spinnerId;
+				var client;
+				var props;
+
+				function init() {
+					initDOMObjects()
+					serverUrl = window.location.hostname;
+					app = qlik.openApp(qlik.currApp().id)
+					app.getAppLayout(function (response) {
+						appLayout = response;
+						if (sessionStorage.getItem('lastReload') === null) {
+							sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
+						}
+						else {
+							var wasReloaded = sessionStorage.getItem('lastReload') < appLayout.qLastReloadTime
+							if (wasReloaded) {
+								setButton("success")
+							}
+							sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
+						}
+					})
+					utils.getCurrentUser().then(function (user) {
+						currentUser = user;
+					})
 					$(reloadSaveButtonLabelId).text('Reload & Save');
-				};
-				
-				function saveApp(){
-					$(reloadSaveButtonLabelId).text('Saving')
-					app.doSave().then(function(response){
-						if(response){
+					$scope.tasksList = [];
+					props = $scope.layout.props
+					client = new utils.HttpClient();
+				}
+
+				function initDOMObjects() {
+					if (typeof (extensionObjectId) === 'undefined') {
+						extensionObjectId = $scope.layout.qInfo.qId;
+						reloadSaveButtonId = '#reload-save-button-' + extensionObjectId;
+						reloadSaveButtonLabelId = '#reload-save-button-label-' + extensionObjectId;
+						spinnerId = '#spinner-' + extensionObjectId;
+						$('#reload-save-button').attr('id', reloadSaveButtonId.replace('#', ''));
+						$('#reload-save-button-label').attr('id', reloadSaveButtonLabelId.replace('#', ''));
+						$('#spinner').attr('id', spinnerId.replace('#', ''));
+					}
+				}
+
+				init();
+
+				function saveApp() {
+					setButton('saving')
+					app.doSave().then(function (response) {
+						if (response) {
 							console.log('saved')
-							$(reloadSaveButtonLabelId).text('Saved & Reloaded')
-							$(reloadSaveButtonId).removeClass('lui-button--info').addClass('lui-button--success')
-							$(spinnerId).css('display', 'none')
-							setTimeout(function () {
-								resetButton()
-							}, 3000);
+							setButton('success')
 						}
 						else {
 							console.log('save failed')
-							$(reloadSaveButtonLabelId).text('Save Failed')
-							$(reloadSaveButtonId).removeClass('lui-button--info').addClass('lui-button--danger')
-							$(spinnerId).css('display', 'none')
-							setTimeout(function () {
-								resetButton()
-							}, 3000);
+							setButton('error')
 						}
 					})
 				}
 
-				$(reloadSaveButtonId).on('click', function(){
-					$(reloadSaveButtonLabelId).text('Reloading')
-					$(reloadSaveButtonId).addClass('lui-button--info')
-					$(spinnerId).css('display', '')
-					app.doReload().then(function(response){
-						if(response){
-							console.log('reloaded')
-							saveApp()
-						}
-						else{
-							console.log('reload failed')
+				$(reloadSaveButtonId).on('click', function () {
+					console.log(props.reloadType)
+					switch (props.reloadType) {
+						case "currApp":
+							setButton('reloading')
+							app.doReload().then(function (response) {
+								if (response) {
+									saveApp()
+								}
+								else {
+									setButton("ready")
+									console.log("failed")
+								}
+							})
+							break
+						case "task":
+							setButton('requestSent')
+							startTask(props.taskId)
+							break
+					}
+				})
+
+				function setButton(type, callback) {
+					$(reloadSaveButtonId).attr('class', 'lui-button');
+					$(spinnerId).css('display', 'none')
+					switch (type) {
+						case "ready":
+							$(reloadSaveButtonLabelId).text("Reload & Save");
+							break
+						case "reloading":
+							$(reloadSaveButtonLabelId).text("Reloading")
+							$(reloadSaveButtonId).addClass("lui-button--info");
+							$(spinnerId).css('display', '')
+							break
+						case "saving":
+							$(reloadSaveButtonLabelId).text("Saving")
+							$(reloadSaveButtonId).addClass("lui-button--info");
+							$(spinnerId).css('display', '')
+							break
+						case "error":
 							$(reloadSaveButtonLabelId).text('Reload Failed')
 							$(reloadSaveButtonId).removeClass('lui-button--info').addClass('lui-button--danger')
 							$(spinnerId).css('display', 'none')
 							setTimeout(function () {
-								resetButton()
+								resetButton();
 							}, 3000);
-						}
-					})
-				
-				})
-
-				function resetButton () {
-					$(reloadSaveButtonId).removeClass().addClass('lui-button');
-					$(reloadSaveButtonLabelId).text('Reload & Save');
+							break
+						case "success":
+							$(reloadSaveButtonLabelId).text('Saved & Reloaded')
+							$(reloadSaveButtonId).addClass('lui-button--success')
+							$(spinnerId).css('display', 'none')
+							setTimeout(function () {
+								resetButton();
+							}, 3000);
+							break
+						case "requestSent":
+							$(reloadSaveButtonLabelId).text("Request has been sent")
+							$(reloadSaveButtonId).addClass("lui-button--info");
+							$(spinnerId).css('display', '')
+							break
+						case "taskStarted":
+							$(reloadSaveButtonLabelId).text("Task has been started")
+							$(reloadSaveButtonId).addClass("lui-button--info");
+							$(spinnerId).css('display', '')
+							setTimeout(function () {
+								resetButton();
+								if (typeof(callback) !== 'undefined') {
+									callback();
+								}
+							}, 3000);
+							break
+						case "waiting":
+							$(reloadSaveButtonLabelId).text("Waiting for task to reload app")
+							$(reloadSaveButtonId).addClass("lui-button--info");
+							$(spinnerId).css('display', '')
+							break
+					}
 				}
 
-				$('#reload-task-button').on('click', function(){
-					var HttpClient = function () {
-						this.get = function (aUrl, aCallback) {
-							var anHttpRequest = new XMLHttpRequest();
-							anHttpRequest.onreadystatechange = function () {
-								if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200)
-									aCallback(anHttpRequest.responseText);
-							}
-							anHttpRequest.open("GET", aUrl, true);
-							anHttpRequest.setRequestHeader("X-Qlik-Xrfkey", "abcdefghijklmnop");
-							anHttpRequest.setRequestHeader("hdr-usr", "WIN-50635PQO9HR\\jan");
-							console.log(anHttpRequest)
-							anHttpRequest.send(null);
+				function resetButton() {
+					$(reloadSaveButtonId).attr('class', 'lui-button');
+					$(reloadSaveButtonLabelId).text('Reload & Save');
+					$(spinnerId).css('display', 'none')
+				}
+
+				function startTask(taskId) {
+					utils.generateXrfkey().then(function (xrfkey) {
+						var Url = 'https://' + serverUrl + '/hdr/qrs/task/' + taskId + '/start/synchronous?Xrfkey=' + xrfkey;
+						var requestHeaders = {
+							"X-Qlik-Xrfkey": xrfkey,
+							"hdr-usr": currentUser,
+							"Content-Type": "application/json"
 						}
-						this.post = function (msg, aUrl, aCallback) {
-							var anHttpRequest = new XMLHttpRequest();
-							anHttpRequest.onreadystatechange = function () {
-								if (anHttpRequest.readyState == 4 && anHttpRequest.status == 201)
-									aCallback(anHttpRequest.responseText);
+						var msg = ''
+						client.post(msg, Url, requestHeaders, function (response) {
+							if (props.waitAppReload) {
+								setButton('taskStarted', function(){
+									setButton('waiting')
+								})
 							}
-							anHttpRequest.open("POST", aUrl, true);
-							anHttpRequest.setRequestHeader("Content-Type", "application/json")
-							anHttpRequest.send(JSON.stringify(msg));
-						}
-					}
-	
-					var client = new HttpClient();
-					var transactionsUrl = 'https://sense.datawizards.pl/hdr/qrs/task/full?Xrfkey=abcdefghijklmnop';
-				   
-					$scope.titleModel = "";
-					$scope.amountModel = null;
-					$scope.transactionsList = [];
-	
-					
-						client.get(transactionsUrl, function (response) {
-							$scope.$apply(function(){
-								$scope.transactionsList = JSON.parse(response);
-							})
-							console.log('tasksList', $scope.transactionsList);
+							else {
+								setButton('taskStarted')
+							}
+							console.log('response', JSON.parse(response))
 						});
-				
-				})
+					})
+				}
 			}
-			]
+			],
+			paint: function () {
+				return qlik.Promise.resolve();
+			}
 		};
 	});

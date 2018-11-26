@@ -1,6 +1,6 @@
 {
 	"name": "AppReloadSave",
-	"description": "Extension for reloadin and saving Qlik Sense Apps",
+	"description": "Extension for reloading and saving Qlik Sense Apps",
 	"icon": "extension",
 	"preview": "assets/icon.png",
 	"type": "visualization",
