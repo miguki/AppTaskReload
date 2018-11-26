@@ -48,7 +48,6 @@ define(["qlik"], function (qlik) {
                     var userDirectory = reply.qReturn.match(/UserDirectory=(.*);/)
                     if (userId != null && userDirectory != null) {
                         currentUser = userDirectory[1] + '\\' + userId[1]
-                        console.log("currentUserProperties", currentUser)
                         resolve(currentUser)
                     }
                     else {

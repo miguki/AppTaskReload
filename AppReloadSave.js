@@ -15,8 +15,6 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 			},
 			controller: ['$scope', function ($scope) {
 
-				console.log('layout', $scope.layout)
-
 				var app;
 				var appLayout;
 				var currentUser;
