@@ -9,6 +9,21 @@ define(["./utils"], function (utils) {
                 type: "items",
                 label: "Extension Settings",
                 items: {
+                    isDesktop: {
+                        component: "text",
+                        ref: "props.isDesktop",
+                        defaultValue: false,
+                        show: false
+                    },
+                    desktopDescription: {
+                        component: "text",
+                        label: "Settings for this extension are available if used in Qlik Sense Entreprise where you can reload either current application or run selected reload task",
+                        show: function (data) {
+                            console.log('data', data)
+                            console.log('data.props.isDesktop', data.props.isDesktop)
+                            return data.props.isDesktop;
+                        }
+                    },
                     reloadType: {
                         type: "string",
                         component: "radiobuttons",
@@ -21,7 +36,10 @@ define(["./utils"], function (utils) {
                             value: "task",
                             label: "Selected Task"
                         }],
-                        defaultValue: "currApp"
+                        defaultValue: "currApp",
+                        show: function (data) {
+                            return !data.props.isDesktop;
+                        }
                     },
                     tasksDropdown: {
                         type: "string",
@@ -51,17 +69,26 @@ define(["./utils"], function (utils) {
                                 console.log('Error getting current user', error)
                             })
                         },
-                        defaultValue: ""
+                        defaultValue: "",
+                        show: function (data) {
+                            return !data.props.isDesktop;
+                        },
                     },
                     waitDescription: {
                         component: "text",
-                        label: "There is no possibility to monitor status of chained tasks so you will not be able to check the real status of reloading. Below setting will set the button either to wait and watch if current app was reloaded or dismiss waiting time and button will return to it's initial form"
+                        label: "There is no possibility to monitor status of chained tasks so you will not be able to check the real status of reloading. Below setting will set the button either to wait and watch if current app was reloaded or dismiss waiting time and button will return to it's initial form",
+                        show: function (data) {
+                            return !data.props.isDesktop;
+                        }
                     },
                     waitAppReload: {
                         type: "boolean",
                         label: "Wait for current app to reload",
                         ref: "props.waitAppReload",
-                        defaultValue: true
+                        defaultValue: true,
+                        show: function (data) {
+                            return !data.props.isDesktop;
+                        }
                     }
                 }
             }

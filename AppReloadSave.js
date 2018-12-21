@@ -26,45 +26,61 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 				var client;
 				var props;
 
+
 				function init() {
-					initDOMObjects()
-					serverUrl = window.location.hostname;
-					app = qlik.openApp(qlik.currApp().id)
-					app.getAppLayout(function (response) {
-						appLayout = response;
-						if (sessionStorage.getItem('lastReload') === null) {
-							sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
-						}
-						else {
-							var wasReloaded = sessionStorage.getItem('lastReload') < appLayout.qLastReloadTime
-							if (wasReloaded) {
-								setButton("success")
+					return new Promise((resolve) => {
+						initDOMObjects().then(function () {
+							utils.isDesktop().then(function (isDesktopReply) {
+								$scope.backendApi.getProperties().then(function (reply) {
+									reply.props.isDesktop = isDesktopReply
+									$scope.backendApi.setProperties(reply);
+								});
+							})
+							props = $scope.layout.props
+							serverUrl = window.location.hostname;
+							app = qlik.openApp(qlik.currApp().id)
+							app.getAppLayout(function (response) {
+								appLayout = response;
+								if (sessionStorage.getItem('lastReload') === null) {
+									sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
+								}
+								else {
+									var wasReloaded = sessionStorage.getItem('lastReload') < appLayout.qLastReloadTime
+									if (wasReloaded) {
+										setButton("success")
+									}
+									sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
+								}
+							})
+							if(props.isDesktop){
+								utils.getCurrentUser().then(function (user) {
+									currentUser = user;
+								}).catch(function(error){
+									console.log(error)
+								})
+								client = new utils.HttpClient();
 							}
-							sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
-						}
+							resetButton();
+						})
+						resolve();
 					})
-					utils.getCurrentUser().then(function (user) {
-						currentUser = user;
-					})
-					$(reloadSaveButtonLabelId).text('Reload & Save');
-					$scope.tasksList = [];
-					props = $scope.layout.props
-					client = new utils.HttpClient();
 				}
 
 				function initDOMObjects() {
-					if (typeof (extensionObjectId) === 'undefined') {
-						extensionObjectId = $scope.layout.qInfo.qId;
-						reloadSaveButtonId = '#reload-save-button-' + extensionObjectId;
-						reloadSaveButtonLabelId = '#reload-save-button-label-' + extensionObjectId;
-						spinnerId = '#spinner-' + extensionObjectId;
-						$('#reload-save-button').attr('id', reloadSaveButtonId.replace('#', ''));
-						$('#reload-save-button-label').attr('id', reloadSaveButtonLabelId.replace('#', ''));
-						$('#spinner').attr('id', spinnerId.replace('#', ''));
-					}
-				}
+					return new Promise((resolve) => {
+						if (typeof (extensionObjectId) === 'undefined') {
+							extensionObjectId = $scope.layout.qInfo.qId;
+							reloadSaveButtonId = '#reload-save-button-' + extensionObjectId;
+							reloadSaveButtonLabelId = '#reload-save-button-label-' + extensionObjectId;
+							spinnerId = '#spinner-' + extensionObjectId;
+							$('#reload-save-button').attr('id', reloadSaveButtonId.replace('#', ''));
+							$('#reload-save-button-label').attr('id', reloadSaveButtonLabelId.replace('#', ''));
+							$('#spinner').attr('id', spinnerId.replace('#', ''));
+						}
+						resolve();
+					})
 
-				init();
+				}
 
 				function saveApp() {
 					setButton('saving')
@@ -79,28 +95,6 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						}
 					})
 				}
-
-				$(reloadSaveButtonId).on('click', function () {
-					console.log(props.reloadType)
-					switch (props.reloadType) {
-						case "currApp":
-							setButton('reloading')
-							app.doReload().then(function (response) {
-								if (response) {
-									saveApp()
-								}
-								else {
-									setButton("ready")
-									console.log("failed")
-								}
-							})
-							break
-						case "task":
-							setButton('requestSent')
-							startTask(props.taskId)
-							break
-					}
-				})
 
 				function setButton(type, callback) {
 					$(reloadSaveButtonId).attr('class', 'lui-button');
@@ -146,7 +140,7 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 							$(spinnerId).css('display', '')
 							setTimeout(function () {
 								resetButton();
-								if (typeof(callback) !== 'undefined') {
+								if (typeof (callback) !== 'undefined') {
 									callback();
 								}
 							}, 3000);
@@ -176,7 +170,7 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						var msg = ''
 						client.post(msg, Url, requestHeaders, function (response) {
 							if (props.waitAppReload) {
-								setButton('taskStarted', function(){
+								setButton('taskStarted', function () {
 									setButton('waiting')
 								})
 							}
@@ -187,6 +181,32 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						});
 					})
 				}
+
+				init().then(function () {
+					$(reloadSaveButtonId).on('click', function () {
+						console.log(props.reloadType)
+						switch (props.reloadType) {
+							case "currApp":
+								setButton('reloading')
+								app.doReload().then(function (response) {
+									if (response) {
+										saveApp()
+										console.log("saved")
+									}
+									else {
+										setButton("error")
+										console.log("failed")
+									}
+								})
+								break
+							case "task":
+								setButton('requestSent')
+								startTask(props.taskId)
+								break
+						}
+					})
+				});
+
 			}
 			],
 			paint: function () {

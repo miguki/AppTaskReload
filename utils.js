@@ -11,7 +11,7 @@ define(["qlik"], function (qlik) {
                 }
                 anHttpRequest.open("GET", aUrl, true);
                 console.log(anHttpRequest)
-                for (var key in requestHeaders){
+                for (var key in requestHeaders) {
                     anHttpRequest.setRequestHeader(key, requestHeaders[key])
                 }
                 console.log(anHttpRequest)
@@ -24,22 +24,20 @@ define(["qlik"], function (qlik) {
                         aCallback(anHttpRequest.responseText);
                 }
                 anHttpRequest.open("POST", aUrl, true);
-                for (var key in requestHeaders){
+                for (var key in requestHeaders) {
                     anHttpRequest.setRequestHeader(key, requestHeaders[key])
                 }
                 anHttpRequest.send(JSON.stringify(msg));
             }
-
-            
         },
-        
+
         getCurrentUser: function () {
             return new Promise((resolve, reject) => {
                 var config = {
                     host: window.location.hostname,
                     prefix: "/",
                     port: window.location.port,
-                    isSecure: true
+                    isSecure: location.protocol === 'https'
                 };
                 var currentUser
                 var global = qlik.getGlobal(config);
@@ -57,7 +55,32 @@ define(["qlik"], function (qlik) {
             });
         },
 
-        generateXrfkey: function(){
+        isDesktop: function () { //ToDo isSecure set before that
+            return new Promise((resolve, reject) => {
+                var config = {
+                    host: window.location.hostname,
+                    prefix: "/",
+                    port: window.location.port,
+                    isSecure: location.protocol === 'https'
+                };
+                var isDesktop
+                var global = qlik.getGlobal(config);
+                global.isPersonalMode(function(reply){
+                    isDesktop = reply.qReturn;
+                    resolve(isDesktop)
+                });
+            })
+        },
+
+        isSecure: function (){
+            if(location.protocol === 'https'){
+                return true
+            } else {
+                return false
+            }
+        },
+
+        generateXrfkey: function () {
             return new Promise((resolve) => {
                 var xrfkey = "";
                 var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -67,7 +90,5 @@ define(["qlik"], function (qlik) {
                 resolve(xrfkey)
             })
         }
-    
     }
-}
-)
+})
