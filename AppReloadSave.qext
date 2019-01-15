@@ -2,7 +2,7 @@
 	"name": "AppReloadSave",
 	"description": "Extension for reloading and saving Qlik Sense Apps",
 	"icon": "extension",
-	"preview": "assets/icon.png",
+	"preview": "icon.png",
 	"type": "visualization",
 	"version": "2.0.0",
 	"author": "Jan Skibniewski",

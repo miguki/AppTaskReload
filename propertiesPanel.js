@@ -5,9 +5,9 @@ define(["./utils"], function (utils) {
         type: "items",
         component: "accordion",
         items: {
-            extensionSettings: {
+            reloadSettings: {
                 type: "items",
-                label: "Extension Settings",
+                label: "Reload Settings",
                 items: {
                     isDesktop: {
                         component: "text",
@@ -19,8 +19,6 @@ define(["./utils"], function (utils) {
                         component: "text",
                         label: "Settings for this extension are available if used in Qlik Sense Entreprise where you can reload either current application or run selected reload task",
                         show: function (data) {
-                            console.log('data', data)
-                            console.log('data.props.isDesktop', data.props.isDesktop)
                             return data.props.isDesktop;
                         }
                     },
@@ -89,6 +87,29 @@ define(["./utils"], function (utils) {
                         show: function (data) {
                             return !data.props.isDesktop;
                         }
+                    }
+                }
+            },
+            settings:{
+				uses: "settings"
+            },
+            about:{
+                label: "About",
+                type: "items",
+                items: {
+                    appTitle:{
+                        label: "AppReloadSave",
+                        component: "text"
+                    },
+                    createdBy:{
+                        label: "Created by Jan Skibniewski",
+                        component: "link",
+                        url: "https://github.com/miguki"
+                    },
+                    license:{
+                        label: "License: MIT",
+                        component: "link",
+                        url: "https://opensource.org/licenses/MIT"
                     }
                 }
             }

@@ -1,4 +1,4 @@
-define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html", "css!./vendors/font-awesome-4.7.0/css/font-awesome.min.css", "css!./stylesheet.css"],
+define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html", "css!./stylesheet.css"],
 	function (qlik, $, utils, propertiesPanel, template) {
 
 		return {
@@ -6,7 +6,8 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 				props: {
 					reloadType: "currApp",
 					waitAppReload: true
-				}
+				},
+				showTitles: false
 			},
 			template: template,
 			definition: propertiesPanel,
@@ -22,10 +23,11 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 				var extensionObjectId;
 				var reloadSaveButtonId;
 				var reloadSaveButtonLabelId;
-				var spinnerId;
+				var reloadSaveButtonIconId;
 				var client;
 				var props;
 
+				console.log($scope.layout)
 
 				function init() {
 					return new Promise((resolve) => {
@@ -72,10 +74,10 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 							extensionObjectId = $scope.layout.qInfo.qId;
 							reloadSaveButtonId = '#reload-save-button-' + extensionObjectId;
 							reloadSaveButtonLabelId = '#reload-save-button-label-' + extensionObjectId;
-							spinnerId = '#spinner-' + extensionObjectId;
+							reloadSaveButtonIconId = '#reload-save-button-icon-' + extensionObjectId;
 							$('#reload-save-button').attr('id', reloadSaveButtonId.replace('#', ''));
 							$('#reload-save-button-label').attr('id', reloadSaveButtonLabelId.replace('#', ''));
-							$('#spinner').attr('id', spinnerId.replace('#', ''));
+							$('#reload-save-button-icon').attr('id', reloadSaveButtonIconId.replace('#', ''));
 						}
 						resolve();
 					})
@@ -86,11 +88,9 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 					setButton('saving')
 					app.doSave().then(function (response) {
 						if (response) {
-							console.log('saved')
 							setButton('success')
 						}
 						else {
-							console.log('save failed')
 							setButton('error')
 						}
 					})
@@ -98,33 +98,33 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 
 				function setButton(type, callback) {
 					$(reloadSaveButtonId).attr('class', 'lui-button');
-					$(spinnerId).css('display', 'none')
+					$(reloadSaveButtonIconId).removeClass("rotating")
 					switch (type) {
 						case "ready":
-							$(reloadSaveButtonLabelId).text("Reload & Save");
+							$(reloadSaveButtonLabelId).text("Reload");
 							break
 						case "reloading":
 							$(reloadSaveButtonLabelId).text("Reloading")
 							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(spinnerId).css('display', '')
+							$(reloadSaveButtonIconId).addClass("rotating")
 							break
 						case "saving":
 							$(reloadSaveButtonLabelId).text("Saving")
 							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(spinnerId).css('display', '')
+							$(reloadSaveButtonIconId).addClass("rotating")
 							break
 						case "error":
 							$(reloadSaveButtonLabelId).text('Reload Failed')
 							$(reloadSaveButtonId).removeClass('lui-button--info').addClass('lui-button--danger')
-							$(spinnerId).css('display', 'none')
+							$(reloadSaveButtonIconId).removeClass("rotating")
 							setTimeout(function () {
 								resetButton();
 							}, 3000);
 							break
 						case "success":
-							$(reloadSaveButtonLabelId).text('Saved & Reloaded')
+							$(reloadSaveButtonLabelId).text('Reloaded & Saved')
 							$(reloadSaveButtonId).addClass('lui-button--success')
-							$(spinnerId).css('display', 'none')
+							$(reloadSaveButtonIconId).removeClass("rotating")
 							setTimeout(function () {
 								resetButton();
 							}, 3000);
@@ -132,12 +132,12 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						case "requestSent":
 							$(reloadSaveButtonLabelId).text("Request has been sent")
 							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(spinnerId).css('display', '')
+							$(reloadSaveButtonIconId).addClass("rotating")
 							break
 						case "taskStarted":
 							$(reloadSaveButtonLabelId).text("Task has been started")
 							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(spinnerId).css('display', '')
+							$(reloadSaveButtonIconId).addClass("rotating")
 							setTimeout(function () {
 								resetButton();
 								if (typeof (callback) !== 'undefined') {
@@ -148,15 +148,15 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						case "waiting":
 							$(reloadSaveButtonLabelId).text("Waiting for task to reload app")
 							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(spinnerId).css('display', '')
+							$(reloadSaveButtonIconId).addClass("rotating")
 							break
 					}
 				}
 
 				function resetButton() {
 					$(reloadSaveButtonId).attr('class', 'lui-button');
-					$(reloadSaveButtonLabelId).text('Reload & Save');
-					$(spinnerId).css('display', 'none')
+					$(reloadSaveButtonLabelId).text('Reload');
+					$(reloadSaveButtonIconId).removeClass("rotating")
 				}
 
 				function startTask(taskId) {
@@ -182,6 +182,10 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 					})
 				}
 
+				$(reloadSaveButtonId).on('resize', function(){
+					console.log($(reloadSaveButtonId).width())
+				})
+
 				init().then(function () {
 					$(reloadSaveButtonId).on('click', function () {
 						console.log(props.reloadType)
@@ -191,11 +195,9 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 								app.doReload().then(function (response) {
 									if (response) {
 										saveApp()
-										console.log("saved")
 									}
 									else {
 										setButton("error")
-										console.log("failed")
 									}
 								})
 								break

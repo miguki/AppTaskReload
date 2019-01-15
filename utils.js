@@ -10,11 +10,9 @@ define(["qlik"], function (qlik) {
                         aCallback(anHttpRequest.responseText);
                 }
                 anHttpRequest.open("GET", aUrl, true);
-                console.log(anHttpRequest)
                 for (var key in requestHeaders) {
                     anHttpRequest.setRequestHeader(key, requestHeaders[key])
                 }
-                console.log(anHttpRequest)
                 anHttpRequest.send(null);
             }
             this.post = function (msg, aUrl, requestHeaders, aCallback) {
@@ -65,15 +63,15 @@ define(["qlik"], function (qlik) {
                 };
                 var isDesktop
                 var global = qlik.getGlobal(config);
-                global.isPersonalMode(function(reply){
+                global.isPersonalMode(function (reply) {
                     isDesktop = reply.qReturn;
                     resolve(isDesktop)
                 });
             })
         },
 
-        isSecure: function (){
-            if(location.protocol === 'https'){
+        isSecure: function () {
+            if (location.protocol === 'https') {
                 return true
             } else {
                 return false
