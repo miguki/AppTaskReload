@@ -1,3 +1,8 @@
+/*
+Copyright (C) 2019 by Jan Skibniewski
+Licensed under MIT license, see LICENSE.md for details
+*/
+
 define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html", "css!./stylesheet.css"],
 	function (qlik, $, utils, propertiesPanel, template) {
 
@@ -54,7 +59,7 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 									sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
 								}
 							})
-							if(props.isDesktop){
+							if(!props.isDesktop){
 								utils.getCurrentUser().then(function (user) {
 									currentUser = user;
 								}).catch(function(error){

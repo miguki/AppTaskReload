@@ -1,3 +1,8 @@
+/*
+Copyright (C) 2019 by Jan Skibniewski
+Licensed under MIT license, see LICENSE.md for details
+*/
+
 define(["./utils"], function (utils) {
     'use strict'
 
