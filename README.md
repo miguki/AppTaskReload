@@ -1,4 +1,4 @@
-# AppTaskReloader
+# AppTaskReload
 
 Simple Qlik Sense Extension for reloading current app or selected server task.
 
