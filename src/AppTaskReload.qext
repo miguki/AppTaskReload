@@ -4,12 +4,12 @@
 	"icon": "extension",
 	"preview": "icon.png",
 	"type": "visualization",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"author": "Jan Skibniewski",
 	"homepage": "https://github.com/miguki",
 	"keywords": "qlik-sense, visualization, reload",
 	"license": "MIT",
-	"repository": "",
+	"repository": "https://github.com/miguki/AppTaskReload",
 	"dependencies": {
 		"qlik-sense": ">=3.0.x"
 	}

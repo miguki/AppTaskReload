@@ -7,6 +7,22 @@ define(["qlik"], function (qlik) {
 
     return {
 
+        getTaskList: function () {
+            return new Promise((resolve, reject) => {
+                qlik.callRepository('/qrs/reloadtask/full').success(function (response) {
+                    var taskList = response.map(function (item) {
+                        return {
+                            value: item.id,
+                            label: item.name
+                        }
+                    })
+                    if (taskList != null){
+                        resolve(taskList)
+                    }
+                });
+            })
+        },
+
         HttpClient: function () {
             this.get = function (aUrl, requestHeaders, aCallback) {
                 var anHttpRequest = new XMLHttpRequest();
@@ -58,7 +74,7 @@ define(["qlik"], function (qlik) {
             });
         },
 
-        isDesktop: function () { //ToDo isSecure set before that
+        isDesktop: function () {
             return new Promise((resolve, reject) => {
                 var config = {
                     host: window.location.hostname,
@@ -82,6 +98,8 @@ define(["qlik"], function (qlik) {
                 return false
             }
         },
+
+        //not used for now
 
         generateXrfkey: function () {
             return new Promise((resolve) => {

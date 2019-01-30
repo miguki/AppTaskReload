@@ -50,38 +50,20 @@ define(["./utils"], function (utils) {
                         label: "Task",
                         ref: "props.taskId",
                         options: function () {
-                            return utils.getCurrentUser().then(function (currentUser) {
-                                return utils.generateXrfkey().then(function (xrfkey) {
-                                    return $.ajax({
-                                        type: "GET",
-                                        url: "https://" + window.location.hostname + "/hdr/qrs/task/full?Xrfkey=" + xrfkey,
-                                        headers: {
-                                            "X-Qlik-Xrfkey": xrfkey,
-                                            "hdr-usr": currentUser
-                                        }
-                                    }).then(function (response) {
-                                        return response.map(function (item) {
-                                            return {
-                                                value: item.id,
-                                                label: item.name
-                                            }
-                                        })
-                                    })
-                                })
-                            }).catch(function (error) {
-                                console.log('Error getting current user', error)
+                            return utils.getTaskList().then(function(taskList) {
+                                return taskList;
                             })
                         },
                         defaultValue: "",
                         show: function (data) {
-                            return !data.props.isDesktop && data.props.reloadType==="task";
+                            return !data.props.isDesktop && data.props.reloadType === "task";
                         },
                     },
                     waitDescription: {
                         component: "text",
                         label: "Only selected task is monitored for completion. If this app will be reloaded in a result of chained task reload you can use below button setting to wait and watch if current app was reloaded or dismiss waiting time and button will return to it's initial form. Also please remember that if you select task that reloads only other app (doesn't reload this app) it is recommended to deselect below option as the button will remain waiting.",
                         show: function (data) {
-                            return !data.props.isDesktop && data.props.reloadType==="task";
+                            return !data.props.isDesktop && data.props.reloadType === "task";
                         }
                     },
                     waitAppReload: {
@@ -90,28 +72,33 @@ define(["./utils"], function (utils) {
                         ref: "props.waitAppReload",
                         defaultValue: true,
                         show: function (data) {
-                            return !data.props.isDesktop && data.props.reloadType==="task";
+                            return !data.props.isDesktop && data.props.reloadType === "task";
                         }
                     }
                 }
             },
-            settings:{
-				uses: "settings"
+            settings: {
+                uses: "settings"
             },
-            about:{
+            about: {
                 label: "About",
                 type: "items",
                 items: {
-                    appTitle:{
+                    appTitle: {
                         label: "AppReloadSave",
                         component: "text"
                     },
-                    createdBy:{
+                    manual: {
+                        label: "Extension configuration & manual",
+                        component: "link",
+                        url: "https://github.com/miguki/AppTaskReload"
+                    },
+                    createdBy: {
                         label: "Created by Jan Skibniewski",
                         component: "link",
                         url: "https://github.com/miguki"
                     },
-                    license:{
+                    license: {
                         label: "License: MIT",
                         component: "link",
                         url: "https://opensource.org/licenses/MIT"

@@ -3,17 +3,17 @@ Copyright (C) 2019 by Jan Skibniewski
 Licensed under MIT license, see LICENSE.md for details
 */
 
-.qv-object-AppReloadSave div.qv-object-content-container {
+.qv-object-AppTaskReload div.qv-object-content-container {
 	overflow: auto;
 }
 
-.qv-object-AppReloadSave button {
+.qv-object-AppTaskReload button {
 	width: 100%;
-	min-width: 170px;
+	min-width: 245px;
 	white-space: nowrap;
 }
 
-.qv-object-AppReloadSave .qv-object-nav>.icon-zoom-in {
+.qv-object-AppTaskReload .qv-object-nav>.icon-zoom-in {
 	display: none;
 }
 
@@ -69,4 +69,27 @@ div[tid=createdBy] .value {
 
 div[tid=license] .value {
 	text-align: center!important;
+}
+
+div[tid=manual] .value {
+	text-align: center!important;
+}
+
+.reload-save-button-wrapper {
+	text-align: center;
+	margin-left: 25px;
+}
+
+.reload-save-button-label-wrapper {
+	display: inline-block;
+	margin: 0 auto;
+}
+
+.reload-save-button-icon-wrapper {
+	float: right;
+}
+
+.reload-save-button-icon {
+	width: 24px;
+	height: 24px;
 }

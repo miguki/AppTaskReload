@@ -1,6 +1,6 @@
 {
   "name": "apptaskreload",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Extension for reloading Qlik Sense apps and tasks",
   "main": "AppTaskReload.js",
   "scripts": {

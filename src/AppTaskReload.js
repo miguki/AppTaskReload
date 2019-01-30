@@ -32,8 +32,6 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 				var client;
 				var props;
 
-				console.log($scope.layout)
-
 				function init() {
 					return new Promise((resolve) => {
 						initDOMObjects().then(function () {
@@ -59,10 +57,10 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 									sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
 								}
 							})
-							if(!props.isDesktop){
+							if (!props.isDesktop) {
 								utils.getCurrentUser().then(function (user) {
 									currentUser = user;
-								}).catch(function(error){
+								}).catch(function (error) {
 									console.log(error)
 								})
 								client = new utils.HttpClient();
@@ -151,7 +149,7 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 							}, 3000);
 							break
 						case "waiting":
-							$(reloadSaveButtonLabelId).text("Waiting for task to reload app")
+							$(reloadSaveButtonLabelId).text("Waiting for app to be reloaded")
 							$(reloadSaveButtonId).addClass("lui-button--info");
 							$(reloadSaveButtonIconId).addClass("rotating")
 							break
@@ -165,35 +163,21 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 				}
 
 				function startTask(taskId) {
-					utils.generateXrfkey().then(function (xrfkey) {
-						var Url = 'https://' + serverUrl + '/hdr/qrs/task/' + taskId + '/start/synchronous?Xrfkey=' + xrfkey;
-						var requestHeaders = {
-							"X-Qlik-Xrfkey": xrfkey,
-							"hdr-usr": currentUser,
-							"Content-Type": "application/json"
+					qlik.callRepository('/qrs/task/' + taskId + '/start/synchronous', 'POST').success(function (response) {
+						if (props.waitAppReload) {
+							setButton('taskStarted', function () {
+								setButton('waiting')
+							})
 						}
-						var msg = ''
-						client.post(msg, Url, requestHeaders, function (response) {
-							if (props.waitAppReload) {
-								setButton('taskStarted', function () {
-									setButton('waiting')
-								})
-							}
-							else {
-								setButton('taskStarted')
-							}
-							console.log('response', JSON.parse(response))
-						});
+						else {
+							setButton('taskStarted')
+						}
 					})
-				}
 
-				$(reloadSaveButtonId).on('resize', function(){
-					console.log($(reloadSaveButtonId).width())
-				})
+				}
 
 				init().then(function () {
 					$(reloadSaveButtonId).on('click', function () {
-						console.log(props.reloadType)
 						switch (props.reloadType) {
 							case "currApp":
 								setButton('reloading')
