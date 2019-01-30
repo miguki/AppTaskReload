@@ -39,14 +39,14 @@ Only users with professional licenses or token based licenses are allowed to mod
 1. If the app is not yet published and you are the app owner no configuration is required
 2. If app is published add below security rule in QMC (example enabling single user to perform app reloading)
 
-![Screenshot](screenshotSecurity01.png)
+![Screenshot](screenshotSecurity01.PNG)
 
 #### Selected task reload option
 
 1. Add above security rule
 2. Add below security rule (example enabling single user to perform task reloading)
 
-![Screenshot](screenshotSecurity02.png)
+![Screenshot](screenshotSecurity02.PNG)
 
 ## Additional information
 
