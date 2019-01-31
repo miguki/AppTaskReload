@@ -19,7 +19,7 @@ Simple Qlik Sense Extension for reloading current app or selected server task
 ## Usage
 
 1. Click button to start app reloading or to trigger selected task depending on configuration
-2. After successful reload the button will become green
+2. After successful reload button will become green
 3. If reload error will occur button will become red
 
 ## Qlik configuration
