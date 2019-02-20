@@ -22,7 +22,7 @@ Simple Qlik Sense Extension for reloading current app or selected server task
 2. After successful reload button will become green
 3. If reload error will occur button will become red
 
-## Qlik configuration
+## Qlik Sense configuration
 
 ### Qlik Sense Desktop
 

@@ -181,7 +181,7 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						switch (props.reloadType) {
 							case "currApp":
 								setButton('reloading')
-								app.doReload().then(function (response) {
+								app.doReload(0, props.partialReload).then(function (response) {
 									if (response) {
 										saveApp()
 									}

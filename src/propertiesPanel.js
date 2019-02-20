@@ -44,6 +44,15 @@ define(["./utils"], function (utils) {
                             return !data.props.isDesktop;
                         }
                     },
+                    partialReload: {
+                        type: "boolean",
+                        label: "Partial reload",
+                        ref: "props.partialReload",
+                        defaultValue: false,
+                        show: function (data) {
+                            return data.props.reloadType==="currApp";
+                        }
+                    },
                     tasksDropdown: {
                         type: "string",
                         component: "dropdown",
