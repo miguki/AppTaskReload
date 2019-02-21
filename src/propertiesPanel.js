@@ -20,13 +20,6 @@ define(["./utils"], function (utils) {
                         defaultValue: false,
                         show: false
                     },
-                    desktopDescription: {
-                        component: "text",
-                        label: "Settings for this extension are available if used in Qlik Sense Entreprise where you can reload either current application or run selected reload task",
-                        show: function (data) {
-                            return data.props.isDesktop;
-                        }
-                    },
                     reloadType: {
                         type: "string",
                         component: "radiobuttons",
@@ -51,6 +44,13 @@ define(["./utils"], function (utils) {
                         defaultValue: false,
                         show: function (data) {
                             return data.props.reloadType==="currApp";
+                        }
+                    },
+                    desktopDescription: {
+                        component: "text",
+                        label: "More settings for this extension are available if used in Qlik Sense Entreprise where you can reload either current application or run selected reload task",
+                        show: function (data) {
+                            return data.props.isDesktop;
                         }
                     },
                     tasksDropdown: {
