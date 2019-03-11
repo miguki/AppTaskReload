@@ -14,12 +14,6 @@ define(["./utils"], function (utils) {
                 type: "items",
                 label: "Reload Settings",
                 items: {
-                    isDesktop: {
-                        component: "text",
-                        ref: "props.isDesktop",
-                        defaultValue: false,
-                        show: false
-                    },
                     reloadType: {
                         type: "string",
                         component: "radiobuttons",
@@ -87,7 +81,16 @@ define(["./utils"], function (utils) {
                 }
             },
             settings: {
-                uses: "settings"
+                uses: "settings",
+                type: "items",
+                items: {
+                    customButtonLabel: {
+                        type: "string",
+                        label: "Custom button label",
+                        ref: "props.readyButtonText",
+                        defaultValue: "Reload"
+                    },
+                }
             },
             about: {
                 label: "About",

@@ -10,7 +10,9 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 			initialProperties: {
 				props: {
 					reloadType: "currApp",
-					waitAppReload: true
+					waitAppReload: true,
+					buttonText: "Reload",
+					readyButtonText: "Reload"
 				},
 				showTitles: false
 			},
@@ -23,26 +25,32 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 
 				var app;
 				var appLayout;
-				var currentUser;
-				var serverUrl;
+				// var currentUser;
+				// var serverUrl;
 				var extensionObjectId;
 				var reloadSaveButtonId;
 				var reloadSaveButtonLabelId;
 				var reloadSaveButtonIconId;
-				var client;
+				// var client;
 				var props;
+				// var buttonText;
+				var readyButtonText;
+
+				function setProperty(key, value) {
+					$scope.backendApi.getProperties().then(function (reply) {
+						reply.props[key] = value
+						$scope.backendApi.setProperties(reply)
+					});
+				}
 
 				function init() {
 					return new Promise((resolve) => {
 						initDOMObjects().then(function () {
 							utils.isDesktop().then(function (isDesktopReply) {
-								$scope.backendApi.getProperties().then(function (reply) {
-									reply.props.isDesktop = isDesktopReply
-									$scope.backendApi.setProperties(reply);
-								});
+								setProperty('isDesktop', isDesktopReply)
 							})
 							props = $scope.layout.props
-							serverUrl = window.location.hostname;
+							serverUrl = window.location.hostname
 							app = qlik.openApp(qlik.currApp().id)
 							app.getAppLayout(function (response) {
 								appLayout = response;
@@ -57,15 +65,23 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 									sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
 								}
 							})
-							if (!props.isDesktop) {
-								utils.getCurrentUser().then(function (user) {
-									currentUser = user;
-								}).catch(function (error) {
-									console.log(error)
-								})
-								client = new utils.HttpClient();
-							}
-							resetButton();
+							// if (!props.isDesktop) {
+							// 	utils.getCurrentUser().then(function (user) {
+							// 		currentUser = user;
+							// 	}).catch(function (error) {
+							// 		console.log(error)
+							// 	})
+							// 	client = new utils.HttpClient();
+							// }
+							readyButtonText = props.readyButtonText
+							$scope.$watch('layout.props.readyButtonText', function (newValue, oldValue) {
+								if (newValue === oldValue) {
+									return;
+								}
+								readyButtonText = props.readyButtonText
+								resetButton()
+							}, true);
+							resetButton()
 						})
 						resolve();
 					})
@@ -84,9 +100,8 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						}
 						resolve();
 					})
-
 				}
-
+			
 				function saveApp() {
 					setButton('saving')
 					app.doSave().then(function (response) {
@@ -104,7 +119,7 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 					$(reloadSaveButtonIconId).removeClass("rotating")
 					switch (type) {
 						case "ready":
-							$(reloadSaveButtonLabelId).text("Reload");
+							$(reloadSaveButtonLabelId).text(readyButtonText)	
 							break
 						case "reloading":
 							$(reloadSaveButtonLabelId).text("Reloading")
@@ -117,7 +132,7 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 							$(reloadSaveButtonIconId).addClass("rotating")
 							break
 						case "error":
-							$(reloadSaveButtonLabelId).text('Reload Failed')
+							$(reloadSaveButtonLabelId).text("Reload Failed")
 							$(reloadSaveButtonId).removeClass('lui-button--info').addClass('lui-button--danger')
 							$(reloadSaveButtonIconId).removeClass("rotating")
 							setTimeout(function () {
@@ -125,7 +140,7 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 							}, 3000);
 							break
 						case "success":
-							$(reloadSaveButtonLabelId).text('Reloaded & Saved')
+							$(reloadSaveButtonLabelId).text("Reloaded & Saved")
 							$(reloadSaveButtonId).addClass('lui-button--success')
 							$(reloadSaveButtonIconId).removeClass("rotating")
 							setTimeout(function () {
@@ -158,9 +173,9 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 
 				function resetButton() {
 					$(reloadSaveButtonId).attr('class', 'lui-button');
-					$(reloadSaveButtonLabelId).text('Reload');
+					$(reloadSaveButtonLabelId).text(readyButtonText);
 					$(reloadSaveButtonIconId).removeClass("rotating")
-				}
+				}			
 
 				function startTask(taskId) {
 					qlik.callRepository('/qrs/task/' + taskId + '/start/synchronous', 'POST').success(function (response) {
@@ -173,7 +188,6 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 							setButton('taskStarted')
 						}
 					})
-
 				}
 
 				init().then(function () {
@@ -197,9 +211,8 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						}
 					})
 				});
-
-			}
-			],
+			 }],
+			
 			paint: function () {
 				return qlik.Promise.resolve();
 			}
