@@ -1,6 +1,6 @@
 # AppTaskReload
 
-Simple Qlik Sense Extension for reloading current app or selected server task
+Qlik Sense Extension for reloading current app or selected server task
 
 ## Installation
 
@@ -12,7 +12,7 @@ Simple Qlik Sense Extension for reloading current app or selected server task
 ## Extension configuration
 
 1. Drop extension onto your Qlik Sense sheet
-2. Configure the extension to reload current app or to start task selected from task list. If you select this option you can configure behaviour of the extension either to just start the task or additionally to wait for current app to be reloaded
+2. Configure the extension to reload current app or to start task selected from task list. If you select this option you can configure behaviour of the extension either to just start the task or additionally to monitor task execution
 3. If the extension is set to reload current app it is possible to select partial reload option
 4. Under appearance section you can set custom button label
 

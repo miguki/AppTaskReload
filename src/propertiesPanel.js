@@ -62,16 +62,9 @@ define(["./utils"], function (utils) {
                             return !data.props.isDesktop && data.props.reloadType === "task";
                         },
                     },
-                    waitDescription: {
-                        component: "text",
-                        label: "Only selected task is monitored for completion. If this app will be reloaded in a result of chained task reload you can use below button setting to wait and watch if current app was reloaded or dismiss waiting time and button will return to it's initial form. Also please remember that if you select task that reloads only other app (doesn't reload this app) it is recommended to deselect below option as the button will remain waiting.",
-                        show: function (data) {
-                            return !data.props.isDesktop && data.props.reloadType === "task";
-                        }
-                    },
                     waitAppReload: {
                         type: "boolean",
-                        label: "Wait for current app to reload",
+                        label: "Monitor task status",
                         ref: "props.waitAppReload",
                         defaultValue: true,
                         show: function (data) {

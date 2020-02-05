@@ -3,8 +3,8 @@ Copyright (C) 2019 by Jan Skibniewski
 Licensed under MIT license, see LICENSE.md for details
 */
 
-define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html", "css!./stylesheet.css"],
-	function (qlik, $, utils, propertiesPanel, template) {
+define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html", "css!./stylesheet.css"],
+	function (angular, qlik, $, utils, propertiesPanel, template) {
 
 		return {
 			initialProperties: {
@@ -18,23 +18,172 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 			},
 			template: template,
 			definition: propertiesPanel,
-			snapshot: {
-				canTakeSnapshot: false
+			support: {
+				snapshot: false,
+				export: false,
+				exportData: false
 			},
 			controller: ['$scope', function ($scope) {
 
+				var $injector = angular.injector(['ng']);
+				var $http = $injector.get("$http");
 				var app;
-				var appLayout;
-				// var currentUser;
-				// var serverUrl;
+				var serverUrl;
 				var extensionObjectId;
 				var reloadSaveButtonId;
 				var reloadSaveButtonLabelId;
 				var reloadSaveButtonIconId;
-				// var client;
 				var props;
-				// var buttonText;
 				var readyButtonText;
+				var generatedTaskId;
+				var taskStatus = 99
+				var taskChecking = false
+				var buttonStatusStack = []
+				var bufferedStatusStack = []
+				const taskEnums = {
+					0: "NeverStarted",
+					1: "Triggered",
+					2: "Started",
+					3: "Queued",
+					4: "AbortInitiated",
+					5: "Aborting",
+					6: "Aborted",
+					7: "FinishedSuccess",
+					8: "FinishedFail",
+					9: "Skipped",
+					10: "Retry",
+					11: "Error",
+					12: "Reset",
+					99: "Not yet started"
+				}
+
+				function StatusStackElement(status, priority, buttonText, buttonClass, buttonRunning) {
+					this.status = status
+					this.priority = priority
+					if (typeof buttonText === 'function') {
+						this.buttonText = buttonText()
+					}
+					else {
+						this.buttonText = buttonText
+					}
+					if (typeof buttonClass === 'function') {
+						this.buttonClass = buttonClass()
+					}
+					else {
+						this.buttonClass = buttonClass
+					}
+					this.buttonRunning = buttonRunning
+				}
+
+				const buttonStatuses = [
+					{
+						status: 'ready',
+						priority: 1,
+						buttonText: function () {
+							return readyButtonText
+						},
+						buttonClass: 'lui-button',
+						buttonRunning: false
+					},
+					{
+						status: 'reloading',
+						priority: 1,
+						buttonText: 'Reloading',
+						buttonClass: 'lui-button lui-button--info',
+						buttonRunning: true
+					},
+					{
+						status: 'saving',
+						priority: 1,
+						buttonText: 'Saving',
+						buttonClass: 'lui-button lui-button--info',
+						buttonRunning: true
+					},
+					{
+						status: 'error',
+						priority: 1,
+						buttonText: 'Reload failed',
+						buttonClass: 'lui-button lui-button--danger',
+						buttonRunning: false
+					},
+					{
+						status: 'success',
+						priority: 2,
+						buttonText: 'Reloaded & Saved',
+						buttonClass: 'lui-button lui-button--success',
+						buttonRunning: false
+					},
+					{
+						status: 'taskStarted',
+						priority: 1,
+						buttonText: 'Task started',
+						buttonClass: 'lui-button lui-button--info',
+						buttonRunning: true
+					},
+					{
+						status: 'waiting',
+						priority: 1,
+						buttonText: 'Waiting',
+						buttonClass: 'lui-button lui-button--info',
+						buttonRunning: true
+					},
+					{
+						status: 'taskStatus',
+						priority: 0,
+						buttonText: function () {
+							return 'Task status: ' + taskEnums[taskStatus]
+						},
+						buttonClass: function () {
+							if (taskStatus === 6 || taskStatus === 8 || taskStatus === 9 || taskStatus === 11 || taskStatus === 12) {
+								return 'lui-button lui-button--danger'
+							}
+							else {
+								return 'lui-button lui-button--info'
+							}
+						},
+						buttonRunning: true
+					}
+				]
+
+				var stackInterval = setInterval(rollStatus, 1000)
+
+				function rollStatus() {
+					if (bufferedStatusStack.length > 0 && !taskChecking) {
+						buttonStatusStack.push(...bufferedStatusStack)
+						bufferedStatusStack = []
+					}
+
+					if (buttonStatusStack.length > 0) {
+						var status = buttonStatusStack.shift()
+						$(reloadSaveButtonLabelId).text(status.buttonText)
+						$(reloadSaveButtonId).attr('class', status.buttonClass);
+						if (status.buttonRunning) {
+							$(reloadSaveButtonIconId).addClass("rotating")
+						}
+						else {
+							$(reloadSaveButtonIconId).removeClass("rotating")
+						}
+					}
+				}
+
+				function setButton(type) {
+					var s = buttonStatuses.find(s => s.status === type);
+					var status = new StatusStackElement(s.status, s.priority, s.buttonText, s.buttonClass, s.buttonRunning)
+
+					if ((status.status === 'success' || status.status === 'ready') && taskChecking) {
+						bufferedStatusStack.push(status)
+					}
+					else {
+						if (buttonStatusStack.length > 0) {
+							if (JSON.stringify(status) !== JSON.stringify(buttonStatusStack[buttonStatusStack.length - 1])) {
+								buttonStatusStack.push(status)
+							}
+						}
+						else {
+							buttonStatusStack.push(status)
+						}
+					}
+				}
 
 				function setProperty(key, value) {
 					$scope.backendApi.getProperties().then(function (reply) {
@@ -52,36 +201,28 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 							props = $scope.layout.props
 							serverUrl = window.location.hostname
 							app = qlik.openApp(qlik.currApp().id)
-							app.getAppLayout(function (response) {
-								appLayout = response;
+							app.getAppLayout(function (appLayout) {
 								if (sessionStorage.getItem('lastReload') === null) {
 									sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
 								}
 								else {
 									var wasReloaded = sessionStorage.getItem('lastReload') < appLayout.qLastReloadTime
-									if (wasReloaded) {
+									if (wasReloaded && props.reloadType === 'task') {
 										setButton("success")
+										setButton("ready")
 									}
-									sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
 								}
+								sessionStorage.setItem('lastReload', appLayout.qLastReloadTime)
 							})
-							// if (!props.isDesktop) {
-							// 	utils.getCurrentUser().then(function (user) {
-							// 		currentUser = user;
-							// 	}).catch(function (error) {
-							// 		console.log(error)
-							// 	})
-							// 	client = new utils.HttpClient();
-							// }
 							readyButtonText = props.readyButtonText
 							$scope.$watch('layout.props.readyButtonText', function (newValue, oldValue) {
 								if (newValue === oldValue) {
 									return;
 								}
 								readyButtonText = props.readyButtonText
-								resetButton()
+								setButton("ready")
 							}, true);
-							resetButton()
+							setButton("ready")
 						})
 						resolve();
 					})
@@ -94,14 +235,17 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 							reloadSaveButtonId = '#reload-save-button-' + extensionObjectId;
 							reloadSaveButtonLabelId = '#reload-save-button-label-' + extensionObjectId;
 							reloadSaveButtonIconId = '#reload-save-button-icon-' + extensionObjectId;
+							maximizeButtonSelector = 'div[tid=' + extensionObjectId + '] a[tid=nav-menu-zoom-in]'
 							$('#reload-save-button').attr('id', reloadSaveButtonId.replace('#', ''));
 							$('#reload-save-button-label').attr('id', reloadSaveButtonLabelId.replace('#', ''));
 							$('#reload-save-button-icon').attr('id', reloadSaveButtonIconId.replace('#', ''));
+							$('#taskButton').attr('id', 'taskButton-' + extensionObjectId);
+							$(maximizeButtonSelector).css('display', 'none');
 						}
 						resolve();
 					})
 				}
-			
+
 				function saveApp() {
 					setButton('saving')
 					app.doSave().then(function (response) {
@@ -111,82 +255,57 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 						else {
 							setButton('error')
 						}
+						setButton('ready')
 					})
 				}
 
-				function setButton(type, callback) {
-					$(reloadSaveButtonId).attr('class', 'lui-button');
-					$(reloadSaveButtonIconId).removeClass("rotating")
-					switch (type) {
-						case "ready":
-							$(reloadSaveButtonLabelId).text(readyButtonText)	
-							break
-						case "reloading":
-							$(reloadSaveButtonLabelId).text("Reloading")
-							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(reloadSaveButtonIconId).addClass("rotating")
-							break
-						case "saving":
-							$(reloadSaveButtonLabelId).text("Saving")
-							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(reloadSaveButtonIconId).addClass("rotating")
-							break
-						case "error":
-							$(reloadSaveButtonLabelId).text("Reload Failed")
-							$(reloadSaveButtonId).removeClass('lui-button--info').addClass('lui-button--danger')
-							$(reloadSaveButtonIconId).removeClass("rotating")
-							setTimeout(function () {
-								resetButton();
-							}, 3000);
-							break
-						case "success":
-							$(reloadSaveButtonLabelId).text("Reloaded & Saved")
-							$(reloadSaveButtonId).addClass('lui-button--success')
-							$(reloadSaveButtonIconId).removeClass("rotating")
-							setTimeout(function () {
-								resetButton();
-							}, 3000);
-							break
-						case "requestSent":
-							$(reloadSaveButtonLabelId).text("Request has been sent")
-							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(reloadSaveButtonIconId).addClass("rotating")
-							break
-						case "taskStarted":
-							$(reloadSaveButtonLabelId).text("Task has been started")
-							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(reloadSaveButtonIconId).addClass("rotating")
-							setTimeout(function () {
-								resetButton();
-								if (typeof (callback) !== 'undefined') {
-									callback();
+				function startTask(taskId) {
+					taskStatus = 99
+					utils.generateXrfkey().then(function (xrfkey) {
+						$http({
+							method: 'POST',
+							url: 'https://' + serverUrl + '/qrs/task/' + taskId + '/start/synchronous?Xrfkey=' + xrfkey,
+							headers: { 'X-Qlik-Xrfkey': xrfkey }
+						}).then(function (response) {
+							generatedTaskId = $scope.generatedTaskId = response.data.value;
+							if (props.waitAppReload) {
+								taskChecking = true
+								setButton('taskStatus')
+								var intervalId = setInterval(checkTask, 500)
+								function checkTask() {
+									checkTaskById(generatedTaskId).then(function () {
+										setButton('taskStatus')
+										if (taskStatus === 6 || taskStatus === 7 || taskStatus === 8 || taskStatus === 9 || taskStatus === 11 || taskStatus === 12) {
+											taskChecking = false
+											if (taskStatus === 6 || taskStatus === 8 || taskStatus === 9 || taskStatus === 11 || taskStatus === 12) {
+												setButton("error")
+												setButton("ready")
+											}
+											clearInterval(intervalId)
+										}
+									})
 								}
-							}, 3000);
-							break
-						case "waiting":
-							$(reloadSaveButtonLabelId).text("Waiting for app to be reloaded")
-							$(reloadSaveButtonId).addClass("lui-button--info");
-							$(reloadSaveButtonIconId).addClass("rotating")
-							break
-					}
+							}
+							else {
+								setButton('taskStarted')
+								setButton('ready')
+							}
+						})
+					})
 				}
 
-				function resetButton() {
-					$(reloadSaveButtonId).attr('class', 'lui-button');
-					$(reloadSaveButtonLabelId).text(readyButtonText);
-					$(reloadSaveButtonIconId).removeClass("rotating")
-				}			
-
-				function startTask(taskId) {
-					qlik.callRepository('/qrs/task/' + taskId + '/start/synchronous', 'POST').success(function (response) {
-						if (props.waitAppReload) {
-							setButton('taskStarted', function () {
-								setButton('waiting')
+				function checkTaskById(taskGUID) {
+					return new Promise((resolve) => {
+						utils.generateXrfkey().then(function (xrfkey) {
+							$http({
+								method: 'GET',
+								url: 'https://' + serverUrl + '/qrs/executionresult?Xrfkey=' + xrfkey + '&filter=ExecutionId eq ' + taskGUID,
+								headers: { 'X-Qlik-Xrfkey': xrfkey }
+							}).then(function (response) {
+								taskStatus = taskStatus = JSON.parse(response.data[0].status)
 							})
-						}
-						else {
-							setButton('taskStarted')
-						}
+							resolve();
+						})
 					})
 				}
 
@@ -205,14 +324,13 @@ define(["qlik", "jquery", "./utils", "./propertiesPanel", "text!./template.html"
 								})
 								break
 							case "task":
-								setButton('requestSent')
 								startTask(props.taskId)
 								break
 						}
 					})
 				});
-			 }],
-			
+			}],
+
 			paint: function () {
 				return qlik.Promise.resolve();
 			}

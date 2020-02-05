@@ -1,6 +1,6 @@
 {
   "name": "apptaskreload",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "Extension for reloading Qlik Sense apps and tasks",
   "main": "AppTaskReload.js",
   "scripts": {
@@ -9,7 +9,7 @@
   "author": "Jan Skibniewski",
   "license": "MIT",
   "devDependencies": {
-    "gulp": "^4.0.0",
+    "gulp": "^4.0.2",
     "gulp-zip": "^4.2.0"
   },
   "dependencies": {}

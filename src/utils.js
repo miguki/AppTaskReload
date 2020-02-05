@@ -3,51 +3,34 @@ Copyright (C) 2019 by Jan Skibniewski
 Licensed under MIT license, see LICENSE.md for details
 */
 
-define(["qlik"], function (qlik) {
+define(["angular", "qlik"], function (angular, qlik) {
+
+    var $injector = angular.injector(['ng']);
+    var $http = $injector.get("$http");
+    var serverUrl = window.location.hostname
 
     return {
 
         getTaskList: function () {
             return new Promise((resolve, reject) => {
-                qlik.callRepository('/qrs/reloadtask/full').success(function (response) {
-                    var taskList = response.map(function (item) {
-                        return {
-                            value: item.id,
-                            label: item.name
+                this.generateXrfkey().then(function (xrfkey) {
+                    $http({
+                        method: 'GET',
+                        url: 'https://' + serverUrl + '/qrs/reloadtask/full?Xrfkey=' + xrfkey,
+                        headers: { 'X-Qlik-Xrfkey': xrfkey }
+                    }).then(function (response) {
+                        var taskList = response.data.map(function (item) {
+                            return {
+                                value: item.id,
+                                label: item.name
+                            }
+                        })
+                        if (taskList != null) {
+                            resolve(taskList)
                         }
                     })
-                    if (taskList != null){
-                        resolve(taskList)
-                    }
-                });
+                })
             })
-        },
-
-        HttpClient: function () {
-            this.get = function (aUrl, requestHeaders, aCallback) {
-                var anHttpRequest = new XMLHttpRequest();
-                anHttpRequest.onreadystatechange = function () {
-                    if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200)
-                        aCallback(anHttpRequest.responseText);
-                }
-                anHttpRequest.open("GET", aUrl, true);
-                for (var key in requestHeaders) {
-                    anHttpRequest.setRequestHeader(key, requestHeaders[key])
-                }
-                anHttpRequest.send(null);
-            }
-            this.post = function (msg, aUrl, requestHeaders, aCallback) {
-                var anHttpRequest = new XMLHttpRequest();
-                anHttpRequest.onreadystatechange = function () {
-                    if (anHttpRequest.readyState == 4 && anHttpRequest.status == 201)
-                        aCallback(anHttpRequest.responseText);
-                }
-                anHttpRequest.open("POST", aUrl, true);
-                for (var key in requestHeaders) {
-                    anHttpRequest.setRequestHeader(key, requestHeaders[key])
-                }
-                anHttpRequest.send(JSON.stringify(msg));
-            }
         },
 
         getCurrentUser: function () {
@@ -92,14 +75,8 @@ define(["qlik"], function (qlik) {
         },
 
         isSecure: function () {
-            if (location.protocol === 'https') {
-                return true
-            } else {
-                return false
-            }
+            return location.protocol === 'https'
         },
-
-        //not used for now
 
         generateXrfkey: function () {
             return new Promise((resolve) => {
