@@ -4,7 +4,7 @@ Qlik Sense Extension for reloading current app or selected server task
 
 ## Installation
 
-1. Download archive AppTaskReload.zip from dist/ folder
+1. Download archive AppTaskReload.zip from [dist](https://github.com/miguki/AppTaskReload/tree/master/dist) folder or from [releases](https://github.com/miguki/AppTaskReload/releases)
 2. Visit your servers' QMC
 3. Navigate to extensions section
 4. Click import button and choose archive AppTaskReload.zip
