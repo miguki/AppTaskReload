@@ -90,7 +90,7 @@ define(["./utils"], function (utils) {
                 type: "items",
                 items: {
                     appTitle: {
-                        label: "AppReloadSave",
+                        label: "AppTaskReload",
                         component: "text"
                     },
                     manual: {
