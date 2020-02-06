@@ -9,7 +9,7 @@ Licensed under MIT license, see LICENSE.md for details
 
 .qv-object-AppTaskReload button {
 	width: 100%;
-	min-width: 245px;
+	min-width: 25px;
 	white-space: nowrap;
 }
 
@@ -92,4 +92,12 @@ div[tid=manual] .value {
 .reload-save-button-icon {
 	width: 24px;
 	height: 24px;
+}
+
+.reload-save-button-label-wrapper-text-hidden {
+	display: none;
+}
+
+.reload-save-button-icon-text-hidden {
+	margin: auto;
 }

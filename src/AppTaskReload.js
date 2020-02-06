@@ -33,6 +33,9 @@ define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./tem
 				var reloadSaveButtonId;
 				var reloadSaveButtonLabelId;
 				var reloadSaveButtonIconId;
+				var reloadSaveButtonWrapperId;
+				var reloadSaveButtonLabelWrapperId;
+				var reloadSaveButtonIconWrapperId;
 				var props;
 				var readyButtonText;
 				var generatedTaskId;
@@ -235,10 +238,16 @@ define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./tem
 							reloadSaveButtonId = '#reload-save-button-' + extensionObjectId;
 							reloadSaveButtonLabelId = '#reload-save-button-label-' + extensionObjectId;
 							reloadSaveButtonIconId = '#reload-save-button-icon-' + extensionObjectId;
+							reloadSaveButtonWrapperId = '#reload-save-button-wrapper-' + extensionObjectId
+							reloadSaveButtonLabelWrapperId = '#reload-save-button-label-wrapper-' + extensionObjectId
+							reloadSaveButtonIconWrapperId = '#reload-save-button-icon-wrapper-' + extensionObjectId
 							maximizeButtonSelector = 'div[tid=' + extensionObjectId + '] a[tid=nav-menu-zoom-in]'
 							$('#reload-save-button').attr('id', reloadSaveButtonId.replace('#', ''));
 							$('#reload-save-button-label').attr('id', reloadSaveButtonLabelId.replace('#', ''));
 							$('#reload-save-button-icon').attr('id', reloadSaveButtonIconId.replace('#', ''));
+							$('#reload-save-button-wrapper').attr('id', reloadSaveButtonWrapperId.replace('#', ''));
+							$('#reload-save-button-label-wrapper').attr('id', reloadSaveButtonLabelWrapperId.replace('#', ''));
+							$('#reload-save-button-icon-wrapper').attr('id', reloadSaveButtonIconWrapperId.replace('#', ''));
 							$('#taskButton').attr('id', 'taskButton-' + extensionObjectId);
 							$(maximizeButtonSelector).css('display', 'none');
 						}
@@ -331,7 +340,26 @@ define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./tem
 				});
 			}],
 
-			paint: function () {
+			paint: function ($element, layout) {
+				var extensionObjectId = layout.qInfo.qId;
+				var reloadSaveButtonId = '#reload-save-button-' + extensionObjectId
+				var reloadSaveButtonWrapperId = '#reload-save-button-wrapper-' + extensionObjectId
+				var reloadSaveButtonLabelWrapperId = '#reload-save-button-label-wrapper-' + extensionObjectId
+				var reloadSaveButtonIconWrapperId = '#reload-save-button-icon-wrapper-' + extensionObjectId
+				var reloadSaveButtonIconId = '#reload-save-button-icon-' + extensionObjectId
+				var buttonSize = $(reloadSaveButtonId).width()
+				if (buttonSize < 245) {
+					$(reloadSaveButtonWrapperId).removeClass('reload-save-button-wrapper')
+					$(reloadSaveButtonLabelWrapperId).addClass('reload-save-button-label-wrapper-text-hidden')
+					$(reloadSaveButtonIconWrapperId).removeClass('reload-save-button-icon-wrapper')
+					$(reloadSaveButtonIconId).addClass('reload-save-button-icon-text-hidden')
+				}
+				else {
+					$(reloadSaveButtonWrapperId).addClass('reload-save-button-wrapper')
+					$(reloadSaveButtonLabelWrapperId).removeClass('reload-save-button-label-wrapper-text-hidden')
+					$(reloadSaveButtonIconWrapperId).addClass('reload-save-button-icon-wrapper')
+					$(reloadSaveButtonIconId).removeClass('reload-save-button-icon-text-hidden')
+				}
 				return qlik.Promise.resolve();
 			}
 		};
