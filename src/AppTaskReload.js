@@ -348,7 +348,7 @@ define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./tem
 				var reloadSaveButtonIconWrapperId = '#reload-save-button-icon-wrapper-' + extensionObjectId
 				var reloadSaveButtonIconId = '#reload-save-button-icon-' + extensionObjectId
 				var buttonSize = $(reloadSaveButtonId).width()
-				if (buttonSize < 245) {
+				if (buttonSize < 230) {
 					$(reloadSaveButtonWrapperId).removeClass('reload-save-button-wrapper')
 					$(reloadSaveButtonLabelWrapperId).addClass('reload-save-button-label-wrapper-text-hidden')
 					$(reloadSaveButtonIconWrapperId).removeClass('reload-save-button-icon-wrapper')
