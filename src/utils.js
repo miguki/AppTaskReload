@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2019 by Jan Skibniewski
+Copyright (C) 2019-2020 by Jan Skibniewski
 Licensed under MIT license, see LICENSE.md for details
 */
 
@@ -8,6 +8,26 @@ define(["angular", "qlik"], function (angular, qlik) {
     var $injector = angular.injector(['ng']);
     var $http = $injector.get("$http");
     var serverUrl = window.location.hostname
+    var serverProxyPrefix = '/'
+    var serverProxyPrefixHttp = ''
+    var serverPort = window.location.port
+    var serverProtocol = window.location.protocol
+
+    var url = window.location.href
+    var prefixMatch = url.match(window.location.hostname + '(\/.*)\/sense')
+    if (prefixMatch !== null) {
+        serverProxyPrefix = prefixMatch[1] + '/'
+        serverProxyPrefixHttp = prefixMatch[1]
+    }
+
+    var requestURI = serverProtocol + '//' + serverUrl + serverProxyPrefixHttp
+
+    var requestConfig = {
+        host: serverUrl,
+        prefix: serverProxyPrefix,
+        port: serverPort,
+        isSecure: serverProtocol === 'https:'
+    };
 
     return {
 
@@ -16,7 +36,7 @@ define(["angular", "qlik"], function (angular, qlik) {
                 this.generateXrfkey().then(function (xrfkey) {
                     $http({
                         method: 'GET',
-                        url: 'https://' + serverUrl + '/qrs/reloadtask/full?Xrfkey=' + xrfkey,
+                        url: requestURI + '/qrs/reloadtask/full?Xrfkey=' + xrfkey,
                         headers: { 'X-Qlik-Xrfkey': xrfkey }
                     }).then(function (response) {
                         var taskList = response.data.map(function (item) {
@@ -35,12 +55,7 @@ define(["angular", "qlik"], function (angular, qlik) {
 
         getCurrentUser: function () {
             return new Promise((resolve, reject) => {
-                var config = {
-                    host: window.location.hostname,
-                    prefix: "/",
-                    port: window.location.port,
-                    isSecure: location.protocol === 'https'
-                };
+                var config = requestConfig
                 var currentUser
                 var global = qlik.getGlobal(config);
                 global.getAuthenticatedUser(function (reply) {
@@ -59,12 +74,7 @@ define(["angular", "qlik"], function (angular, qlik) {
 
         isDesktop: function () {
             return new Promise((resolve, reject) => {
-                var config = {
-                    host: window.location.hostname,
-                    prefix: "/",
-                    port: window.location.port,
-                    isSecure: location.protocol === 'https'
-                };
+                var config = requestConfig
                 var isDesktop
                 var global = qlik.getGlobal(config);
                 global.isPersonalMode(function (reply) {
@@ -72,10 +82,6 @@ define(["angular", "qlik"], function (angular, qlik) {
                     resolve(isDesktop)
                 });
             })
-        },
-
-        isSecure: function () {
-            return location.protocol === 'https'
         },
 
         generateXrfkey: function () {
@@ -87,6 +93,10 @@ define(["angular", "qlik"], function (angular, qlik) {
                 }
                 resolve(xrfkey)
             })
+        },
+
+        getRequestURI: function () {
+            return requestURI
         }
     }
 })

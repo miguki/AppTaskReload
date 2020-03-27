@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2019 by Jan Skibniewski
+Copyright (C) 2019-2020 by Jan Skibniewski
 Licensed under MIT license, see LICENSE.md for details
 */
 
@@ -28,7 +28,7 @@ define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./tem
 				var $injector = angular.injector(['ng']);
 				var $http = $injector.get("$http");
 				var app;
-				var serverUrl;
+				var requestURI
 				var extensionObjectId;
 				var reloadSaveButtonId;
 				var reloadSaveButtonLabelId;
@@ -202,7 +202,7 @@ define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./tem
 								setProperty('isDesktop', isDesktopReply)
 							})
 							props = $scope.layout.props
-							serverUrl = window.location.hostname
+							requestURI = utils.getRequestURI()
 							app = qlik.openApp(qlik.currApp().id)
 							app.getAppLayout(function (appLayout) {
 								if (sessionStorage.getItem('lastReload') === null) {
@@ -273,7 +273,7 @@ define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./tem
 					utils.generateXrfkey().then(function (xrfkey) {
 						$http({
 							method: 'POST',
-							url: 'https://' + serverUrl + '/qrs/task/' + taskId + '/start/synchronous?Xrfkey=' + xrfkey,
+							url: requestURI + '/qrs/task/' + taskId + '/start/synchronous?Xrfkey=' + xrfkey,
 							headers: { 'X-Qlik-Xrfkey': xrfkey }
 						}).then(function (response) {
 							generatedTaskId = $scope.generatedTaskId = response.data.value;
@@ -308,7 +308,7 @@ define(["angular", "qlik", "jquery", "./utils", "./propertiesPanel", "text!./tem
 						utils.generateXrfkey().then(function (xrfkey) {
 							$http({
 								method: 'GET',
-								url: 'https://' + serverUrl + '/qrs/executionresult?Xrfkey=' + xrfkey + '&filter=ExecutionId eq ' + taskGUID,
+								url: requestURI + '/qrs/executionresult?Xrfkey=' + xrfkey + '&filter=ExecutionId eq ' + taskGUID,
 								headers: { 'X-Qlik-Xrfkey': xrfkey }
 							}).then(function (response) {
 								taskStatus = taskStatus = JSON.parse(response.data[0].status)
