@@ -4,7 +4,7 @@
 	"icon": "extension",
 	"preview": "icon.png",
 	"type": "visualization",
-	"version": "3.1.1",
+	"version": "3.2",
 	"author": "Jan Skibniewski",
 	"homepage": "https://github.com/miguki",
 	"keywords": "qlik-sense, visualization, reload",
