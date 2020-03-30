@@ -37,7 +37,7 @@ define(["./utils"], function (utils) {
                         ref: "props.partialReload",
                         defaultValue: false,
                         show: function (data) {
-                            return data.props.reloadType==="currApp";
+                            return data.props.reloadType === "currApp";
                         }
                     },
                     desktopDescription: {
@@ -53,7 +53,7 @@ define(["./utils"], function (utils) {
                         label: "Task",
                         ref: "props.taskId",
                         options: function () {
-                            return utils.getTaskList().then(function(taskList) {
+                            return utils.getTaskList().then(function (taskList) {
                                 return taskList;
                             })
                         },
@@ -81,8 +81,18 @@ define(["./utils"], function (utils) {
                         type: "string",
                         label: "Custom button label",
                         ref: "props.readyButtonText",
-                        defaultValue: "Reload"
+                        defaultValue: "Reload",
+                        expression: "optional"
                     },
+                }
+            },
+            addons: {
+                uses: "addons",
+                items: {
+                    calcCond: {
+                        label: "Data handling",
+                        uses: "calcCond"
+                    }
                 }
             },
             about: {
